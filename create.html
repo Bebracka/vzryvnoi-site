@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Создай свой сайт-привет</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button {
+      margin: 10px;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+    }
+    input[type="text"] {
+      width: 240px;
+    }
+    input[type="file"] {
+      background: #222;
+      color: #ccc;
+    }
+    button {
+      background: #ff4646;
+      color: white;
+      cursor: pointer;
+    }
+    .admin-btn {
+      background: #555;
+      margin-top: 15px;
+    }
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Создай свой сайт-привет</h1>
+
+  <input type="text" id="filename" placeholder="Имя файла (без .html)">
+  <br>
+  <input type="text" id="text" placeholder="Твой взрывной текст" maxlength="80">
+  <br>
+  <input type="file" id="imgInput" accept="image/*">
+  <br>
+  <button onclick="generateSite()">Скачать сайт</button>
+  <button class="admin-btn" onclick="sendToAdmin()">Отправить админу</button>
+
+  <canvas id="canvas" width="600" height="700"></canvas>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let latestBlob = null;
+
+    function generateSite() {
+      const file = document.getElementById("imgInput").files[0];
+      const text = document.getElementById("text").value || "привет";
+      const name = document.getElementById("filename").value.trim().replace(/[^a-zA-Z0-9-_]/g, "") || "privet";
+
+      if (!file) return alert("Загрузи изображение!");
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const size = Math.min(img.width, img.height);
+          const sx = (img.width - size) / 2;
+          const sy = (img.height - size) / 2;
+
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, 600, 700);
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, 600, 600);
+
+          ctx.font = "bold 32px sans-serif";
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "center";
+          ctx.fillText(text, 300, 670);
+
+          const dataURL = canvas.toDataURL("image/png");
+
+          const html = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>ВЗРЫВНОЙ ПРИВЕТ</title>
+  <style>
+    body { background: #111; color: white; font-family: sans-serif; text-align: center; padding: 40px; }
+    img { max-width: 100%; border-radius: 12px; box-shadow: 0 0 20px rgba(255,0,0,0.5); }
+    h1 { color: #ff4646; }
+  </style>
+</head>
+<body>
+  <h1>ВЗРЫВНОЙ ПРИВЕТ</h1>
+  <img src="${dataURL}">
+  <p style="margin-top: 20px; font-size: 18px;">${text}</p>
+  <p style="color:#666;font-size:14px;">Сделано на <a href='https://bubonprivet.ru' style='color:#888;'>bubonprivet.ru</a></p>
+</body>
+</html>`;
+
+          latestBlob = new Blob([html], { type: "text/html" });
+
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(latestBlob);
+          link.download = name + ".html";
+          link.click();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function sendToAdmin() {
+      if (!latestBlob) {
+        alert("Сначала создай сайт, чтобы отправить админу!");
+        return;
+      }
+
+      const file = new File([latestBlob], "vzryvnoi-privet.html", { type: "text/html" });
+      const tgLink = "https://t.me/kotek5657";
+
+      alert("Теперь откроется Telegram. Просто отправь файл админу.");
+      window.open(tgLink, "_blank");
+    }
+  </script>
+
+</body>
+</html>
